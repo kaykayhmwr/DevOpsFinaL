@@ -25,6 +25,17 @@ services:
         reservations:
           cpus: '0.25'
           memory: 256M
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.backend.rule=Host(`orangecaramel.online`, `www.orangecaramel.online`)"
+        - "traefik.http.routers.backend.entrypoints=websecure"
+        - "traefik.http.routers.backend.tls.certresolver=myresolver"
+        - "traefik.http.services.backend.loadbalancer.server.port=3000"
+        # HTTP to HTTPS Redirect
+        - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+        - "traefik.http.routers.backend-http.rule=Host(`orangecaramel.online`, `www.orangecaramel.online`)"
+        - "traefik.http.routers.backend-http.entrypoints=web"
+        - "traefik.http.routers.backend-http.middlewares=redirect-to-https"
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
       interval: 30s
@@ -33,17 +44,6 @@ services:
       start_period: 10s
     networks:
       - app-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`orangecaramel.online`, `www.orangecaramel.online`)"
-      - "traefik.http.routers.backend.entrypoints=websecure"
-      - "traefik.http.routers.backend.tls.certresolver=myresolver"
-      - "traefik.http.services.backend.loadbalancer.server.port=3000"
-      # HTTP to HTTPS Redirect
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-      - "traefik.http.routers.backend-http.rule=Host(`orangecaramel.online`, `www.orangecaramel.online`)"
-      - "traefik.http.routers.backend-http.entrypoints=web"
-      - "traefik.http.routers.backend-http.middlewares=redirect-to-https"
 
   mongo:
     image: mongo:7
