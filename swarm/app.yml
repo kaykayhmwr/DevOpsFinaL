@@ -32,7 +32,6 @@ services:
         traefik.http.routers.backend.entrypoints: "websecure"
         traefik.http.routers.backend.tls.certresolver: "myresolver"
         traefik.http.services.backend.loadbalancer.server.port: "3000"
-        # HTTP to HTTPS Redirect
         traefik.http.middlewares.redirect-to-https.redirectscheme.scheme: "https"
         traefik.http.routers.backend-http.rule: "Host(`orangecaramel.online`)"
         traefik.http.routers.backend-http.entrypoints: "web"
@@ -45,6 +44,7 @@ services:
       start_period: 10s
     networks:
       - app-network
+    endpoint_mode: dnsrr
 
   mongo:
     image: mongo:7
