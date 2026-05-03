@@ -31,6 +31,7 @@ services:
 networks:
   app-network:
     external: true
+    name: app_app-network
 
 volumes:
   traefik-certificates:
