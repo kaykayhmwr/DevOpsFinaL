@@ -42,11 +42,10 @@ jobs:
             echo "$ECR_PASSWORD" | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY_BACKEND }}
             cd /opt/app
             export ECR_BACKEND=${{ secrets.ECR_REGISTRY_BACKEND }}/finaldevops/backend
-            export ECR_FRONTEND=${{ secrets.ECR_REGISTRY_BACKEND }}/finaldevops/backend
             export VERSION=${{ steps.commit.outputs.sha }}
+            docker stack deploy -c swarm/traefik.yml traefik
             docker stack deploy --with-registry-auth -c swarm/app.yml app
             docker service update --with-registry-auth --force app_backend
-            # docker service update --force app_frontend
       
       - name: Verify Deployment
         uses: appleboy/ssh-action@master
@@ -58,4 +57,3 @@ jobs:
             sleep 10
             docker service ls
             docker service ps app_backend
-            docker service ps app_frontend

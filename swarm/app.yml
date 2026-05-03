@@ -2,8 +2,6 @@ version: '3.8'
 services:
   backend:
     image: ${ECR_BACKEND}:${VERSION}
-    ports:
-      - "3000:3000"
     environment:
       - DATABASE_URL=mongodb://mongo:27017/app
       - NODE_ENV=production
@@ -36,35 +34,16 @@ services:
     networks:
       - app-network
     labels:
-      traefik.enable: "true"
-      traefik.http.routers.backend.rule: "Host(`api.yourdomain.com`)"
-      traefik.http.services.backend.loadbalancer.server.port: "3000"
-
-  frontend:
-    image: ${ECR_FRONTEND}:${VERSION}
-    deploy:
-      replicas: 2
-      restart_policy:
-        condition: on-failure
-      update_config:
-        parallelism: 1
-        delay: 10s
-      placement:
-        constraints:
-          - node.role == worker
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
-    networks:
-      - app-network
-    labels:
-      traefik.enable: "true"
-      traefik.http.routers.frontend.rule: "Host(`yourdomain.com`)"
-      traefik.http.services.frontend.loadbalancer.server.port: "80"
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`orangecaramel.online`, `www.orangecaramel.online`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls.certresolver=myresolver"
+      - "traefik.http.services.backend.loadbalancer.server.port=3000"
+      # HTTP to HTTPS Redirect
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.routers.backend-http.rule=Host(`orangecaramel.online`, `www.orangecaramel.online`)"
+      - "traefik.http.routers.backend-http.entrypoints=web"
+      - "traefik.http.routers.backend-http.middlewares=redirect-to-https"
 
   mongo:
     image: mongo:7
