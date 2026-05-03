@@ -71,5 +71,6 @@ volumes:
 networks:
   app-network:
     driver: overlay
+    attachable: true
     driver_opts:
       com.docker.network.driver.overlay.vxlanid: "4096"
