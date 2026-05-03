@@ -8,6 +8,7 @@ services:
       - LOG_LEVEL=info
     deploy:
       replicas: 2
+      endpoint_mode: dnsrr
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -44,7 +45,6 @@ services:
       start_period: 10s
     networks:
       - app-network
-    endpoint_mode: dnsrr
 
   mongo:
     image: mongo:7
