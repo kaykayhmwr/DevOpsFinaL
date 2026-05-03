@@ -1,0 +1,53 @@
+name: CD Pipeline
+
+on:
+  workflow_run:
+    workflows: ["CI Pipeline"]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      
+      - name: Get commit SHA from workflow run
+        id: commit
+        run: echo "sha=${{ github.event.workflow_run.head_sha }}" >> $GITHUB_OUTPUT
+      
+      - name: Deploy to Swarm via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SWARM_MANAGER_IP }}
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/app
+            export ECR_BACKEND=${{ secrets.ECR_BACKEND_URI }}:${{ steps.commit.outputs.sha }}
+            export ECR_FRONTEND=${{ secrets.ECR_FRONTEND_URI }}:${{ steps.commit.outputs.sha }}
+            export VERSION=${{ steps.commit.outputs.sha }}
+            docker stack deploy -c swarm/app.yml app
+            docker service update --force app_backend
+            docker service update --force app_frontend
+      
+      - name: Verify Deployment
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SWARM_MANAGER_IP }}
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            sleep 10
+            docker service ls
+            docker service ps app_backend
+            docker service ps app_frontend

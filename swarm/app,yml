@@ -1,0 +1,95 @@
+version: '3.8'
+services:
+  backend:
+    image: ${ECR_BACKEND}:${VERSION}
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=mongodb://mongo:27017/app
+      - NODE_ENV=production
+      - LOG_LEVEL=info
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+      placement:
+        constraints:
+          - node.role != manager
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    networks:
+      - app-network
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.backend.rule: "Host(`api.yourdomain.com`)"
+      traefik.http.services.backend.loadbalancer.server.port: "3000"
+
+  frontend:
+    image: ${ECR_FRONTEND}:${VERSION}
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+      update_config:
+        parallelism: 1
+        delay: 10s
+      placement:
+        constraints:
+          - node.role == worker
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    networks:
+      - app-network
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.frontend.rule: "Host(`yourdomain.com`)"
+      traefik.http.services.frontend.loadbalancer.server.port: "80"
+
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: app
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      placement:
+        constraints:
+          - node.role == worker
+    networks:
+      - app-network
+
+volumes:
+  mongo-data:
+    driver: local
+
+networks:
+  app-network:
+    driver: overlay
+    driver_opts:
+      com.docker.network.driver.overlay.vxlanid: "4096"
