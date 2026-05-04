@@ -6,9 +6,10 @@ services:
       - DATABASE_URL=mongodb://mongo:27017/app
       - NODE_ENV=production
       - LOG_LEVEL=info
+    ports:
+      - "3000:3000"
     deploy:
       replicas: 2
-      endpoint_mode: dnsrr
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -16,9 +17,6 @@ services:
       update_config:
         parallelism: 1
         delay: 10s
-      placement:
-        constraints:
-          - node.role != manager
       resources:
         limits:
           cpus: '0.5'
@@ -28,7 +26,6 @@ services:
           memory: 256M
       labels:
         traefik.enable: "true"
-        traefik.docker.network: "app_app-network"
         traefik.http.routers.backend.rule: "Host(`orangecaramel.online`)"
         traefik.http.routers.backend.entrypoints: "websecure"
         traefik.http.routers.backend.tls.certresolver: "myresolver"

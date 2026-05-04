@@ -18,6 +18,11 @@
       - apt-transport-https
     state: present
 
+- name: Create docker group
+  group:
+    name: docker
+    state: present
+
 - name: Create non-root user for Swarm management
   user:
     name: docker
