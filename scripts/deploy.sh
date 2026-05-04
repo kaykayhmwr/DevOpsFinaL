@@ -11,7 +11,7 @@ fi
 
 echo "Deploying to Swarm..."
 
-ssh -i ../finaldevops-key.pem ubuntu@$MANAGER_IP << 'EOF'
+ssh -i ~/.ssh/finaldevops-key.pem ubuntu@$MANAGER_IP << 'EOF'
 cd /opt/app
 git pull origin main
 export VERSION=$(git rev-parse --short HEAD)
